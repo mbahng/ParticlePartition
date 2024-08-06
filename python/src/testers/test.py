@@ -22,14 +22,16 @@ def wedge_test(lining:str = "makePatches_Projective_center", apexZ0 = 0, z0_spac
         v (str, optional): version of data, ensure data file is in directory as "wedgeData_{v}_128.txt"
         acceptance_method : choose between 'Analytic' or 'MonteCarlo'
     """
-
+    forPaper = True # publication-quality plots
+    
     accept_cutoff = z0_luminousRegion    
     #create list for z values we're testing the acceptance of, number of covers, and PRF
     showZimperfect = False
     if (wedges[1]-wedges[0]) == 1:
         showZimperfect = True
-    if (wedges[1]-wedges[0]) > 50:
+    if (wedges[1]-wedges[0]) > 1:
         show_acceptance_of_cover = False
+        movie = False
         z0_spacing = 0.2
     num_covers = []
     num_all_patches = []
@@ -47,18 +49,28 @@ def wedge_test(lining:str = "makePatches_Projective_center", apexZ0 = 0, z0_spac
     #read wedgeData file and create environment
     all_data = readFile(f'python/data/wedgeData_{v}_128.txt', wedges[1])
     #loop through all events
+    layersFor2D = []
+    nPointsInTrapezoidFor2D = []
     for ik, k in enumerate(np.arange(wedges[0], wedges[1])):
-        print('wedge: ', k)
         #convert to existing data format
         env, points = all_data[k] 
         env = Environment(top_layer_lim = top_layer_cutoff, beam_axis_lim=z0_luminousRegion)
         data = DataSet(env)
-        if show_acceptance_of_cover:
-            plt.figure(figsize = (1.7*z0_luminousRegion/figSizeScale, top_layer_cutoff/figSizeScale))
         if uniform_N_points == False:
             data.importData(points)
         else:
             data.generateUniform([uniform_N_points, uniform_N_points, uniform_N_points, uniform_N_points, uniform_N_points])
+
+        nPointsInTrapezoid = []    
+        if show_acceptance_of_cover:
+            plt.figure(figsize = (1.7*z0_luminousRegion/figSizeScale, top_layer_cutoff/figSizeScale))
+        else:
+            nPointsInTrapezoid = data.plot(show_lines = True, show = ( k == 42))
+            print(' nPointsInTrapezoid: ', nPointsInTrapezoid)
+            for layer in range(len(nPointsInTrapezoid)):
+                nPointsInTrapezoidFor2D.append(nPointsInTrapezoid[layer])
+                layersFor2D.append(layer+1)
+ 
         #add the 1 micron boundary points
         data.addBoundaryPoint()
         #solve for cover
@@ -67,6 +79,7 @@ def wedge_test(lining:str = "makePatches_Projective_center", apexZ0 = 0, z0_spac
         #append number of covers in the patch
         num_covers.append(cover.n_patches)
         num_all_patches.append(len(cover.all_patches))
+        print('wedge: ', k, ' n_patches: ', cover.n_patches)
         out = [] 
 
         #these loops calculate PRF
@@ -93,9 +106,11 @@ def wedge_test(lining:str = "makePatches_Projective_center", apexZ0 = 0, z0_spac
                 
             if show_acceptance_of_cover:
                     
+                plt.tick_params(axis='both', which='minor', labelsize=18)
                 plt.xlabel(r"$z_1$ (cm)", fontsize = 18)
-                plt.ylabel(r"$z_{top}$ (cm)", fontsize = 18)
-                plt.title("acceptance of cover", fontsize = 18)
+                plt.ylabel(r"$z_{L}$ (cm)", fontsize = 18)
+                if not forPaper:
+                    plt.title("acceptance of cover", fontsize = 18)
                 z1Lim = cover.patches[-1].straightLineProjectorFromLayerIJtoK(-top_layer_cutoff,z0_luminousRegion,env.num_layers,0,1)
                 plt.axline((z1Lim, -top_layer_cutoff), (env.trapezoid_edges[0], top_layer_cutoff),linewidth=1, color='black')
                 plt.axline((-z1Lim, top_layer_cutoff), (-env.trapezoid_edges[0], -top_layer_cutoff),linewidth=1, color='black')
@@ -176,10 +191,14 @@ def wedge_test(lining:str = "makePatches_Projective_center", apexZ0 = 0, z0_spac
             mean_list[ik, iz] = mean_list[ik, iz] + percentage_accepted
 
         if movie:
-            cover.movie(z0_spacing = z0_spacing, figSizeScale = movieFigSizeScale)     
+            cover.movie(z0_spacing = z0_spacing, figSizeScale = movieFigSizeScale, forPaper = forPaper)     
+            plt.savefig(f"python/Figures/cover{k}.pdf")
+            plt.savefig(f"python/Figures/cover{k}.png")
             plt.close()       
         if show_acceptance_of_cover:
             plt.show()
+            plt.savefig(f"python/Figures/cover{k}.pdf")
+            plt.savefig(f"python/Figures/cover{k}.png")
             plt.close()
 
         
@@ -197,18 +216,32 @@ def wedge_test(lining:str = "makePatches_Projective_center", apexZ0 = 0, z0_spac
         ymin = 95
 
     #creates plots and saves them
-    plt.scatter(z0Array, np.mean(mean_list, axis = 0), color = 'r', s = 10)
-    plt.plot(z0Array, np.mean(mean_list, axis = 0), color = 'k')
-    plt.xlabel(r'$z_0$ [cm]', fontsize = 16)
-    plt.ylabel('Acceptance (%)',  fontsize = 16)
-    plt.ylim(ymin, 100.0)
+    myFontSize = 18
+    myTickSize = 14
+    plt.xlabel(r'$z_0$ (cm)', fontsize = 1.3*myFontSize)
+    plt.tick_params(axis='both', which='major', labelsize=myTickSize)
     plt.xlim(-z0_luminousRegion,z0_luminousRegion)  
-    plt.title(f'{lining}', fontsize = 16)
+    if forPaper:
+        plt.scatter(z0Array, 10000.0*(100.0-np.mean(mean_list, axis = 0)), color = 'r', s = 10)
+        plt.plot(z0Array, 10000.0*(100.0-np.mean(mean_list, axis = 0)), color = 'k')
+        plt.ylabel('$(1-\epsilon)$ (ppm)',  fontsize = myFontSize)
+        plt.ylim(0.0, 15.0)
+        plt.yticks(np.arange(0, 15, 5))
+    else:
+        plt.scatter(z0Array, np.mean(mean_list, axis = 0), color = 'r', s = 10)
+        plt.plot(z0Array, np.mean(mean_list, axis = 0), color = 'k')
+        plt.ylabel('Acceptance (%)',  fontsize = 16)
+        plt.title(f'{lining}', fontsize = 16)
+        plt.ylim(ymin, 100.0)
     mask = np.abs(z0Array) <= accept_cutoff
     PRFm = format(np.mean(out), '.2f')
     PRFs = format(np.std(out), '.2f')
-    plt.legend([f"N_realPatches: {mean_num}" + r'$\pm$' + f"{std_num}\nN_allPatches: {all_patches_mean}" + r'$\pm$' + f"{all_patches_std}\nPoint Repetition Factor: {PRFm}" + r'$\pm$' + f"{PRFs}\n" + r'$apexZ_0$' + f" = {apexZ0}, ppl = {ppl}, " + r"$z_{top}$: "+ f"{top_layer_cutoff}\n" + r'$N_{wedges}$ ' + f"= {wedges[1]}, {data_string}\nAverage non-Acceptance [-{accept_cutoff}, {accept_cutoff}]: {int((100.0-np.mean(mean_list[:, mask]))*10000)} ppm"],
-        loc = 8, fontsize = 12)
+    if forPaper:
+        plt.legend([f"$< 1-\epsilon > = $" +f"{int((100.0-np.mean(mean_list[:, mask]))*10000)} ppm"], loc = 'upper center', fontsize = myFontSize)
+        plt.tight_layout()
+        plt.savefig(f"python/Figures/inEfficiency.pdf")
+    else:
+        plt.legend([f"N_realPatches: {mean_num}" + r'$\pm$' + f"{std_num}\nN_allPatches: {all_patches_mean}" + r'$\pm$' + f"{all_patches_std}\nPoint Repetition Factor: {PRFm}" + r'$\pm$' + f"{PRFs}\n" + r'$apexZ_0$' + f" = {apexZ0}, ppl = {ppl}, " + r"$z_{top}$: "+ f"{top_layer_cutoff}\n" + r'$N_{wedges}$ ' + f"= {wedges[1]}, {data_string}\nAverage non-Acceptance [-{accept_cutoff}, {accept_cutoff}]: {int((100.0-np.mean(mean_list[:, mask]))*10000)} ppm"], loc = 8, fontsize = 12)
     if savefig == True:
         try:
             at = len(apexZ0)
@@ -218,13 +251,18 @@ def wedge_test(lining:str = "makePatches_Projective_center", apexZ0 = 0, z0_spac
     plt.show()
     plt.hist(num_covers, 
                     bins=np.arange(np.min(num_covers), np.max(num_covers)+2)-0.5,
-                    edgecolor='black', 
-                    rwidth=0.8, label = f"mean: {mean_num}, stdev: {std_num}"
-                )
-    plt.title(f"Number of Real Patches per Cover ({lining})", fontsize = '20')
-    plt.xlabel("Number of Real Patches", fontsize = '16')
-    plt.ylabel("Number of Covers", fontsize = '16')
-    plt.legend(fontsize = '20')
+                    edgecolor='black', histtype='stepfilled',
+                    rwidth=0.8, label = f"$\mu$ = {mean_num}, $\sigma$ = {std_num}")
+    if not forPaper:
+        plt.title(f"Number of Real Patches per Cover ({lining})", fontsize = '20')
+    plt.xlabel("$n_P$", fontsize = 1.3*myFontSize)
+    plt.ylabel("number of covers", fontsize = myFontSize)
+    plt.legend(loc='upper right')
+    plt.tick_params(axis='both', which='major', labelsize=myTickSize)
+    plt.legend(fontsize = myFontSize)
+    plt.tight_layout()
+    plt.savefig(f"python/Figures/nPatches.png")
+    plt.savefig(f"python/Figures/nPatches.pdf")
     plt.show()
     if (np.max(num_all_patches) - np.min(num_all_patches)) > 10:
         hist_step = 5
@@ -232,12 +270,47 @@ def wedge_test(lining:str = "makePatches_Projective_center", apexZ0 = 0, z0_spac
         hist_step = 1
     plt.hist(num_all_patches, 
                     bins=np.arange(np.min(num_all_patches), np.max(num_all_patches)+2, hist_step)-0.5,
-                    edgecolor='black', 
-                    rwidth=0.8, label = f"mean: {all_patches_mean}, stdev: {all_patches_std}")
-    plt.title(f"Number of All Patches per Cover ({lining})", fontsize = '20')
-    plt.xlabel("Number of All Patches", fontsize = '16')
-    plt.ylabel("Number of Covers", fontsize = '16')
-    plt.legend(fontsize = '20')
+                    edgecolor='black',  histtype='stepfilled',
+                    rwidth=0.8, label = f"$\mu$ = {all_patches_mean}, $\sigma$ = {all_patches_std}")
+    if not forPaper:
+        plt.title(f"Number of All Patches per Cover ({lining})", fontsize = '20')
+    plt.xlabel("$n_{TP}$", fontsize = 1.3*myFontSize)
+    plt.ylabel("number of covers", fontsize = myFontSize)
+    plt.legend(loc='upper right')
+    plt.tick_params(axis='both', which='major', labelsize=myTickSize)
+    plt.legend(fontsize = myFontSize)
+    plt.tight_layout()
+    plt.savefig(f"python/Figures/nTrialPatches.png")
+    plt.savefig(f"python/Figures/nTrialPatches.pdf")
+    plt.show()  
+
+    plt.hist2d(num_covers, num_all_patches, 
+               bins=[np.arange(np.min(num_covers), int(0.9*np.max(num_covers))+2)-0.5, np.arange(np.min(num_all_patches), int(0.75*np.max(num_all_patches))+2, hist_step)-0.5],
+               edgecolor='black', cmin = 1)
+    plt.xlabel("$n_{P}$", fontsize = 1.3*myFontSize)
+    plt.ylabel("$n_{TP}$", fontsize = 1.3*myFontSize)
+    plt.tick_params(axis='both', which='major', labelsize=myTickSize)
+    plt.locator_params(axis='x', nbins=6)
+    plt.locator_params(axis='y', nbins=5) 
+    plt.grid(visible=None, which='both', axis='both')
+    plt.tight_layout()
+    plt.savefig(f"python/Figures/nTrialPatches_nPatches.png")
+    plt.savefig(f"python/Figures/nTrialPatches_nPatches.pdf")
+    plt.show()  
+
+#    print(' num_covers: ', num_covers, 'length: ', len(num_covers))
+#    print(' num_all_patches: ', num_all_patches, ' length: ', len(num_all_patches))
+#    print(' nPointsInTrapezoidFor2D: ', nPointsInTrapezoidFor2D, 'length: ', len(nPointsInTrapezoidFor2D))
+#    print(' layersFor2D: ', layersFor2D, ' length: ', len(layersFor2D))
+    plt.hist2d(layersFor2D, nPointsInTrapezoidFor2D, bins=[np.arange(np.min(layersFor2D), np.max(layersFor2D)+1)-0.5, np.arange(np.min(nPointsInTrapezoidFor2D), np.max(nPointsInTrapezoidFor2D), hist_step)-0.5], edgecolor='black', cmin = 1)
+    plt.xlabel("layer number", fontsize = 1.3*myFontSize)
+    plt.ylabel("number of hits", fontsize = 1.3*myFontSize)
+    plt.tick_params(axis='both', which='major', labelsize=myTickSize)
+    plt.locator_params(axis='x', nbins=6)
+    plt.locator_params(axis='y', nbins=5) 
+    plt.grid(visible=None, which='both', axis='both')
+    plt.tight_layout()
+    plt.savefig(f"python/Figures/nPoints_layer.pdf")
     plt.show()  
 
     #cover.plot()
@@ -650,8 +723,8 @@ def numCovers(lining:str = "makePatches_Projective", events=1000, apexZ0 = 0, pp
     std = np.std(num_covers)
     plt.hist(num_covers, 
                 bins=np.arange(np.min(num_covers), np.max(num_covers)+2)-0.5,
-                edgecolor='black', 
-                rwidth=0.8, label = f"mean: {format(avg, '.2f')}, stdev: {format(std, '.2f')}"
+                edgecolor='black',  histtype='stepfilled',
+                rwidth=0.8, label = f"$\mu$ = {format(avg, '.2f')}, $\sigma$ = {format(std, '.2f')}"
             )
     print(f"({lining}) - {format(avg, '.2f')}, {format(std, '.2f')}")
     plt.title(f"Number of Patches per Cover ({lining})", fontsize = '20')
@@ -784,8 +857,8 @@ def pointRepetitionFactor(lining:str = "makePatches_Projective", events=128, ape
 
         
     plt.hist(out, bins=np.arange(11) - 0.5, 
-             edgecolor='black', 
-             label = f"mean: {format(np.mean(out), '.2f')}, stdev: {format(np.std(out), '.2f')}",
+             edgecolor='black',  histtype='stepfilled', 
+             label = f"$\mu$ = {format(np.mean(out), '.2f')}, $\sigma$ = {format(np.std(out), '.2f')}",
              rwidth=0.8
             ) 
     plt.xlabel("Number of Covering Patches", fontsize = '16')
@@ -851,7 +924,7 @@ def pointRepetitionFactorLayer(lining:str = "makePatches_Projective_center", wed
         plt.subplot(1, 5, layer+1)
         plt.hist(out[layer],
                 edgecolor='black', bins=np.arange(6) + 0.5, 
-                label = f"mean: {format(np.mean(out[layer]), '.2f')}\nstdev: {format(np.std(out[layer]), '.2f')}", rwidth=0.8)
+                label = f"$\mu$ = {format(np.mean(out[layer]), '.2f')}\nstdev: {format(np.std(out[layer]), '.2f')}", rwidth=0.8)
         plt.xlabel("Number of Covering Patches", fontsize = '16')
         plt.ylabel("Number of Points", fontsize = '16')
         plt.title(f"Layer {layer+1}", fontsize = '18')

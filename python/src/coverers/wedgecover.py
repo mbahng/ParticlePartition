@@ -2080,8 +2080,11 @@ class wedgeCover():
                 
             cv2.destroyAllWindows()
 
-    def movie(self, z0_spacing=0.5, figSizeScale = 6.5):
+    def movie(self, z0_spacing=0.5, figSizeScale = 6.5, forPaper = False):
         zInnerLayer = np.arange(-22, 22+z0_spacing, z0_spacing)
+
+        myTickSize = 28
+        myFontSize = 38
         
         if self.n_patches == 0: 
             raise Exception("You must run the solve method first to generate the patches. ")
@@ -2097,11 +2100,12 @@ class wedgeCover():
                         list_of_segs = [pgram.crossSection(zIn) for pgram in patch.parallelograms]
                         overlap_of_superpoints = intersection(patch.env, list_of_segs, True) 
                         list_of_intersections.append(overlap_of_superpoints)
-
                 
-                plt.xlabel(r"$z_1$ (cm)", fontsize = 18)
-                plt.ylabel(r"$z_{top}$ (cm)", fontsize = 18)
-                plt.title("acceptance of cover", fontsize = 18)
+                plt.tick_params(axis='both', which='major', labelsize=myTickSize)
+                plt.xlabel(r"$z_1$ (cm)", fontsize = myFontSize)
+                plt.ylabel(r"$z_{L}$ (cm)", fontsize = myFontSize, labelpad = -25)
+                if not forPaper:
+                    plt.title("acceptance of cover", fontsize = 18)
                 z1Lim = self.all_patches[-1].straightLineProjectorFromLayerIJtoK(-self.env.top_layer_lim ,self.env.beam_axis_lim,self.env.num_layers,0,1)
                 plt.axline((z1Lim, -self.env.top_layer_lim), (self.env.trapezoid_edges[0], self.env.top_layer_lim),linewidth=1, color='black')
                 plt.axline((-z1Lim, self.env.top_layer_lim), (-self.env.trapezoid_edges[0], -self.env.top_layer_lim),linewidth=1, color='black')
@@ -2117,7 +2121,10 @@ class wedgeCover():
                     col += 1
 
                 #plt.show()
+            plt.tight_layout()
             plt.savefig(f"python/temp_image_dir/{str(name).zfill(2)}.png")
+#            plt.savefig(f"python/temp_image_dir/{str(name).zfill(2)}.pdf")
+#            plt.savefig(f"python/temp_image_dir/{str(name).zfill(2)}.svg")
             plt.clf() 
             name += 1 
 

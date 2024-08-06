@@ -102,35 +102,48 @@ class DataSet():
 
     def plot(self, show_lines = False, show = False): 
         
+#        print (zVals, rVals)
+#        plt.scatter(*zip(*coords), c="g", s=3)
         # Plot grey lines 
-        for radius in self.env.radii: 
-            plt.plot([-self.env.top_layer_lim, self.env.top_layer_lim], 
-                     [radius, radius], 
-                     color=(0.5, 0.5, 0.5, 0.5), 
-                     linewidth=1)
-            
-        
-        coords = [(point.z, point.radius) for layer in self.array for point in layer]
-        max_height = self.env.radii[-1]
-    
-        plt.scatter(*zip(*coords), c="g", s=3)
-        
-        # X Y Labels
-        plt.xlabel('z [cm]', fontsize = 20)
-        plt.ylabel('r [cm]',  fontsize = 20)
-        plt.yticks(np.arange(0, max_height + 1, self.env.num_layers), fontsize = 20)
-        plt.xticks(fontsize = 20)
-        plt.title(f'Scatter Plot of Space Points', fontsize = 24)
-    
-        if show_lines == True: 
-            
-            plt.plot([self.env.beam_axis_lim, self.env.top_layer_lim], [0.0, max_height], c="r", alpha=0.5)
-            plt.plot([-self.env.beam_axis_lim, self.env.beam_axis_lim], [0.0, 0.0], c="r", alpha=0.5)
-            plt.plot([-self.env.beam_axis_lim, -self.env.top_layer_lim], [0.0, max_height], c="r", alpha=0.5)
+
+        nPointsInTrapezoid = []
+        for layer in self.array:
+            zValsPerLayer = [point.z for point in layer if np.abs(point.z) < 50]
+            nPointsInTrapezoid.append(len(zValsPerLayer))
         
         if show == True:
-            plt.show()
+            
+            coords = [(point.z, point.radius) for layer in self.array for point in layer]
+            zVals = [point.z for layer in self.array for point in layer if np.abs(point.z) < 50]
+            rVals = [point.radius for layer in self.array for point in layer if np.abs(point.z) < 50]
+
+            for radius in self.env.radii: 
+                plt.plot([-self.env.top_layer_lim, self.env.top_layer_lim], [radius, radius], color=(0.5, 0.5, 0.5, 0.5), linewidth=1)        
+
+            plt.scatter(zVals, rVals, c="g", s=3)
         
+            # X Y Labels
+            plt.xlabel('z (cm)', fontsize = 20)
+            plt.ylabel('r (cm)',  fontsize = 20)
+            max_height = self.env.radii[-1]
+            plt.yticks(np.arange(0, max_height + 1, self.env.num_layers), fontsize = 20)
+            plt.xticks(fontsize = 20)
+            plt.locator_params(axis='x', nbins=5)
+#        plt.title(f'Scatter Plot of Space Points', fontsize = 24)
+    
+            if show_lines == True: 
+                plt.plot([self.env.beam_axis_lim, self.env.top_layer_lim], [0.0, max_height], c="b", alpha=0.5, linestyle = ':')
+                plt.plot([-self.env.top_layer_lim, self.env.top_layer_lim], [0.0, 0.0], c="m", alpha=0.5, linestyle = '--')
+                plt.plot([-self.env.beam_axis_lim, self.env.beam_axis_lim], [0.0, 0.0], c="r", alpha=0.5)
+                plt.plot([-self.env.beam_axis_lim, -self.env.top_layer_lim], [0.0, max_height], c="b", alpha=0.5, linestyle = ':')
+        
+#            plt.figure(figsize = (50, 25))
+            plt.tight_layout()
+            plt.savefig(f"python/Figures/wedgeData.pdf")
+            plt.show()
+
+        return nPointsInTrapezoid
+    
     def addBoundaryPoint(self, offset = 0.0001):
         """Adds one point on each side of the trapezoid for better acceptance
 
