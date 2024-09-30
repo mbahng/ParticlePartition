@@ -123,11 +123,12 @@ class DataSet():
             plt.scatter(zVals, rVals, c="g", s=3)
         
             # X Y Labels
-            plt.xlabel('z (cm)', fontsize = 20)
-            plt.ylabel('r (cm)',  fontsize = 20)
+            myFontSize = 11
+            plt.xlabel('z (cm)', fontsize = 1.3*myFontSize)
+            plt.ylabel('r (cm)',  fontsize = 1.3*myFontSize)
             max_height = self.env.radii[-1]
-            plt.yticks(np.arange(0, max_height + 1, self.env.num_layers), fontsize = 20)
-            plt.xticks(fontsize = 20)
+            plt.yticks(np.arange(0, max_height + 1, self.env.num_layers), fontsize = myFontSize)
+            plt.xticks(fontsize = myFontSize)
             plt.locator_params(axis='x', nbins=5)
 #        plt.title(f'Scatter Plot of Space Points', fontsize = 24)
     
@@ -138,6 +139,7 @@ class DataSet():
                 plt.plot([-self.env.beam_axis_lim, -self.env.top_layer_lim], [0.0, max_height], c="b", alpha=0.5, linestyle = ':')
         
 #            plt.figure(figsize = (50, 25))
+            plt.gca().set_aspect(2.0)
             plt.tight_layout()
             plt.savefig(f"python/Figures/wedgeData.pdf")
             plt.show()

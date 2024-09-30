@@ -455,6 +455,7 @@ class wedgeCover():
         self.superPoints = [] 
         self.all_patches = []
         self.real_patch_list = []
+        self.tertiaryPatch = False
         
     def add_patch(self, curr_patch:wedgePatch): 
         if self.n_patches == 0: 
@@ -1255,7 +1256,8 @@ class wedgeCover():
                 projectionOfCcornerToBeam = self.patches[-1].straightLineProjectorFromLayerIJtoK(c_corner,self.patches[-1].c_corner[0],self.env.num_layers,1,0)
 
                 saved_apexZ0 = self.patches[-1].c_corner[0]
-
+                
+                makeHorizontallyShiftedPatch = False
                 if madeComplementaryPatch:
                     self.patches[-1].getShadows(z_top_min,z_top_max)
                     self.patches[-2].getShadows(z_top_min,z_top_max)
@@ -1381,6 +1383,7 @@ class wedgeCover():
 
             apexZ0 = self.patches[-1].c_corner[0]
             apexZ0 = saved_apexZ0
+            self.tertiaryPatch = self.tertiaryPatch or makeHorizontallyShiftedPatch
             print('=======================================================  z1_Align: ', apexZ0)
         #for i in range(3):
             #del self.patches[-1]                                                                                                  

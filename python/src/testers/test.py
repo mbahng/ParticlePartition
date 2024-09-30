@@ -79,7 +79,7 @@ def wedge_test(lining:str = "makePatches_Projective_center", apexZ0 = 0, z0_spac
         #append number of covers in the patch
         num_covers.append(cover.n_patches)
         num_all_patches.append(len(cover.all_patches))
-        print('wedge: ', k, ' n_patches: ', cover.n_patches)
+        print('wedge: ', k, ' n_patches: ', cover.n_patches, ' tertiaryPatch: ', cover.tertiaryPatch)
         out = [] 
 
         #these loops calculate PRF
@@ -192,13 +192,15 @@ def wedge_test(lining:str = "makePatches_Projective_center", apexZ0 = 0, z0_spac
 
         if movie:
             cover.movie(z0_spacing = z0_spacing, figSizeScale = movieFigSizeScale, forPaper = forPaper)     
-            plt.savefig(f"python/Figures/cover{k}.pdf")
-            plt.savefig(f"python/Figures/cover{k}.png")
+            plt.tight_layout()
+            plt.savefig(f"python/Figures/cover{k}_{cover.n_patches}.pdf")
+            plt.savefig(f"python/Figures/cover{k}_{cover.n_patches}.png")
             plt.close()       
         if show_acceptance_of_cover:
+            plt.tight_layout()
+            plt.savefig(f"python/Figures/cover{k}_{cover.n_patches}.pdf")
+            plt.savefig(f"python/Figures/cover{k}_{cover.n_patches}.png")
             plt.show()
-            plt.savefig(f"python/Figures/cover{k}.pdf")
-            plt.savefig(f"python/Figures/cover{k}.png")
             plt.close()
 
         
@@ -257,7 +259,7 @@ def wedge_test(lining:str = "makePatches_Projective_center", apexZ0 = 0, z0_spac
         plt.title(f"Number of Real Patches per Cover ({lining})", fontsize = '20')
     plt.xlabel("$n_P$", fontsize = 1.3*myFontSize)
     plt.ylabel("number of covers", fontsize = myFontSize)
-    plt.legend(loc='upper right')
+    plt.legend(loc=1)
     plt.tick_params(axis='both', which='major', labelsize=myTickSize)
     plt.legend(fontsize = myFontSize)
     plt.tight_layout()
@@ -286,29 +288,28 @@ def wedge_test(lining:str = "makePatches_Projective_center", apexZ0 = 0, z0_spac
 
     plt.hist2d(num_covers, num_all_patches, 
                bins=[np.arange(np.min(num_covers), int(0.9*np.max(num_covers))+2)-0.5, np.arange(np.min(num_all_patches), int(0.75*np.max(num_all_patches))+2, hist_step)-0.5],
-               edgecolor='black', cmin = 1)
+               edgecolor='face', cmin = 1)
     plt.xlabel("$n_{P}$", fontsize = 1.3*myFontSize)
     plt.ylabel("$n_{TP}$", fontsize = 1.3*myFontSize)
     plt.tick_params(axis='both', which='major', labelsize=myTickSize)
     plt.locator_params(axis='x', nbins=6)
     plt.locator_params(axis='y', nbins=5) 
-    plt.grid(visible=None, which='both', axis='both')
+#    plt.grid(visible=None, which='both', axis='both')
     plt.tight_layout()
     plt.savefig(f"python/Figures/nTrialPatches_nPatches.png")
     plt.savefig(f"python/Figures/nTrialPatches_nPatches.pdf")
     plt.show()  
 
-#    print(' num_covers: ', num_covers, 'length: ', len(num_covers))
-#    print(' num_all_patches: ', num_all_patches, ' length: ', len(num_all_patches))
-#    print(' nPointsInTrapezoidFor2D: ', nPointsInTrapezoidFor2D, 'length: ', len(nPointsInTrapezoidFor2D))
-#    print(' layersFor2D: ', layersFor2D, ' length: ', len(layersFor2D))
-    plt.hist2d(layersFor2D, nPointsInTrapezoidFor2D, bins=[np.arange(np.min(layersFor2D), np.max(layersFor2D)+1)-0.5, np.arange(np.min(nPointsInTrapezoidFor2D), np.max(nPointsInTrapezoidFor2D), hist_step)-0.5], edgecolor='black', cmin = 1)
+    print(' nPointsInTrapezoidFor2D: ', nPointsInTrapezoidFor2D, 'length: ', len(nPointsInTrapezoidFor2D))
+    print(' layersFor2D: ', layersFor2D, ' length: ', len(layersFor2D))
+    plt.hist2d(layersFor2D, nPointsInTrapezoidFor2D, bins=[np.arange(np.min(layersFor2D), np.max(layersFor2D)+2)-0.5, np.arange(np.min(nPointsInTrapezoidFor2D), np.max(nPointsInTrapezoidFor2D), hist_step)-0.5], edgecolor='face', cmin = 1)
     plt.xlabel("layer number", fontsize = 1.3*myFontSize)
     plt.ylabel("number of hits", fontsize = 1.3*myFontSize)
     plt.tick_params(axis='both', which='major', labelsize=myTickSize)
     plt.locator_params(axis='x', nbins=6)
     plt.locator_params(axis='y', nbins=5) 
-    plt.grid(visible=None, which='both', axis='both')
+#    plt.grid(visible=None, which='both', axis='both')
+    plt.gca().set_aspect(0.1)
     plt.tight_layout()
     plt.savefig(f"python/Figures/nPoints_layer.pdf")
     plt.show()  
