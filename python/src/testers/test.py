@@ -7,7 +7,8 @@ import numpy as np
 import matplotlib.pyplot as plt 
 import time
 
-def wedge_test(lining:str = "makePatches_Projective_center", apexZ0 = 0, z0_spacing = 0.5, ppl = 16, z0_luminousRegion = 15., wedges = [0, 128], lines=1000, v = 'v3', top_layer_cutoff = 50., accept_cutoff = 10., leftRightAlign=True, uniform_N_points = False, acceptance_method = "Analytic", show_acceptance_of_cover=False, movie = False, savefig=False, figSizeScale=6, movieFigSizeScale=3):
+def wedge_test(lining:str = "makePatches_Projective_center", apexZ0 = 0, z0_spacing = 0.5, ppl = 16, z0_luminousRegion = 15., wedges = [0, 128], lines=1000, v = 'v3', top_layer_cutoff = 50., accept_cutoff = 10., leftRightAlign=True, uniform_N_points = False, acceptance_method = "Analytic", show_acceptance_of_cover=False, movie = False, savefig=False, figSizeScale=6, movieFigSizeScale=3,
+               output_dir="temp_image_dir", dbg_output = True, early_ret = False, unary=False):
     """Creates acceptance vs z0 plot
     
     Args:
@@ -45,10 +46,16 @@ def wedge_test(lining:str = "makePatches_Projective_center", apexZ0 = 0, z0_spac
     z0Imperfect = []
     z0OverEfficiency = []
     #read wedgeData file and create environment
-    all_data = readFile(f'python/data/wedgeData_{v}_128.txt', wedges[1])
+    if not unary:
+        all_data = readFile(f'python/data/wedgeData_{v}_128.txt', wedges[1])
+    else:
+        all_data = readUnaryFile(f'python/data/wedgeData_{v}_128.txt', "python/data/wdata_index.bin", wedges[1])
+        wedges[0] = 0
+        wedges[1] = 1
     #loop through all events
     for ik, k in enumerate(np.arange(wedges[0], wedges[1])):
-        print('wedge: ', k)
+        if dbg_output:
+            print('wedge: ', k)
         #convert to existing data format
         env, points = all_data[k] 
         env = Environment(top_layer_lim = top_layer_cutoff, beam_axis_lim=z0_luminousRegion)
@@ -62,7 +69,7 @@ def wedge_test(lining:str = "makePatches_Projective_center", apexZ0 = 0, z0_spac
         #add the 1 micron boundary points
         data.addBoundaryPoint()
         #solve for cover
-        cover = wedgeCover(env, data)
+        cover = wedgeCover(env, data, output_dir)
         cover.solve(apexZ0 = apexZ0, lining=lining, ppl = ppl, leftRight=leftRightAlign, show = False)
         #append number of covers in the patch
         num_covers.append(cover.n_patches)
@@ -135,15 +142,18 @@ def wedge_test(lining:str = "makePatches_Projective_center", apexZ0 = 0, z0_spac
                 #print('total_measure:',total_measure)
                 percentage_accepted = 100.0*total_measure/(2.0 * patch.env.top_layer_lim)
                 if (percentage_accepted < 99.0) and (abs(z0) < z0_luminousRegion):
-                    print('wedge: ', k, ' underEfficiency percentage_accepted: ', percentage_accepted, ' z0:', z0)
+                    if dbg_output:
+                        print('wedge: ', k, ' underEfficiency percentage_accepted: ', percentage_accepted, ' z0:', z0)
                     z0Imperfect.append(z0)
                     for seg in list_of_z0intersectionsCopy:
-                        print('segment:',seg.min_z5_accepted, seg.max_z5_accepted)
+                        if dbg_output:
+                            print('segment:',seg.min_z5_accepted, seg.max_z5_accepted)
                     #for patch in cover.patches:
                         #if (overlap_of_superpoints_z0Scan.min_z5_accepted < overlap_of_superpoints_z0Scan.max_z5_accepted):
                             #print('overlap_of_superpoints_z0Scan:',overlap_of_superpoints_z0Scan.min_z5_accepted,overlap_of_superpoints_z0Scan.max_z5_accepted)
                 if (percentage_accepted > 100.0001) and (abs(z0) < z0_luminousRegion):
-                    print('wedge: ', k, ' overEfficiency percentage_accepted: ', percentage_accepted, ' z0:', z0)
+                    if dbg_output:
+                        print('wedge: ', k, ' overEfficiency percentage_accepted: ', percentage_accepted, ' z0:', z0)
                     z0OverEfficiency.append(z0)
 
                 if showZimperfect and show_acceptance_of_cover:
@@ -197,6 +207,9 @@ def wedge_test(lining:str = "makePatches_Projective_center", apexZ0 = 0, z0_spac
         ymin = 95
 
     #creates plots and saves them
+    if early_ret:
+        return (np.mean(mean_list, axis=0), mean_num, all_patches_mean) # acceptances, patches used, patches tested
+
     plt.scatter(z0Array, np.mean(mean_list, axis = 0), color = 'r', s = 10)
     plt.plot(z0Array, np.mean(mean_list, axis = 0), color = 'k')
     plt.xlabel(r'$z_0$ [cm]', fontsize = 16)
@@ -239,7 +252,7 @@ def wedge_test(lining:str = "makePatches_Projective_center", apexZ0 = 0, z0_spac
     plt.ylabel("Number of Covers", fontsize = '16')
     plt.legend(fontsize = '20')
     plt.show()  
-
+    return np.mean(mean_list, axis=0), mean_num, all_patches_mean
     #cover.plot()
 
 def unaccepted_lines(apexZ0:list = [-10, 0, 10], wedge_number = 0, line_origin:list = [-5, 5], accepted = False, unaccepted = True, v = 'v3', top_layer_cutoff = 100., uniform_points = False): 
