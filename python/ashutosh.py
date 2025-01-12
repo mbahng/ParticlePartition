@@ -20,7 +20,8 @@ cov = wedgeCover(env, ds)
 #cov.makePatches_ShadowQuilt() 
 #cov.plot()
 # wedge 664 has a big hole, check it out
-wedge_test(lining = 'makePatches_ShadowQuilt_fromEdges',apexZ0=0,top_layer_cutoff=50, wedges=[145,146], z0_spacing=0.05, leftRightAlign=False, show_acceptance_of_cover=True, accept_cutoff=15, movie = True, movieFigSizeScale=3)
+# in N=128 pT=5, skip 819 and 4286, deleted these wedges
+wedge_test(lining = 'makePatches_ShadowQuilt_fromEdges',apexZ0=0,top_layer_cutoff=50, wedges=[117,118], z0_spacing=0.05, leftRightAlign=False, show_acceptance_of_cover=True, accept_cutoff=15, movie = True, movieFigSizeScale=3)
 #wedge_test(lining = 'makePatches_ShadowQuilt_fromEdges',apexZ0=0,top_layer_cutoff=50, wedges=[448,449], z0_spacing=0.05, leftRightAlign=False, show_acceptance_of_cover=True, accept_cutoff=15, movie = True, movieFigSizeScale=3)
 
 #deprecated or untested methods

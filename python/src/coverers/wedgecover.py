@@ -14,9 +14,9 @@ class wedgeSuperPoint():
     
     def __init__(self, points):
         
-        if np.size(points) != 16:
-            if (np.size(points) != 32) and (np.size(points) != 31):
-                raise Exception("This patch does not have 16 or 32/31 points in each layer")
+#        if np.size(points) != 16:
+#            if (np.size(points) != 32) and (np.size(points) != 31):
+#                raise Exception("This patch does not have 16 or 32/31 points in each layer")
         z_list = np.array([points[x].z for x in range(len(points))])
         self.z_values = z_list
         self.points = points 
@@ -184,7 +184,7 @@ class wedgePatch():
         for j, superpoint in enumerate(self.superpoints[:-1], start=1): 
             z_j_min = superpoint.min 
             z_j_max = superpoint.max 
-            
+            print("SP",j," z_j_min = ",z_j_min," z_j_max = ",z_j_max ) # AVK debugging 
             a = self.straightLineProjector(top_layer_zmax, z_j_min, j)
             b = self.straightLineProjector(top_layer_zmax, z_j_max, j)
             
@@ -246,7 +246,7 @@ class wedgePatch():
         d_corner_list = [pgram.shadow_topL_jR for pgram in self.parallelograms]
         #print ("a_corner_list: ", a_corner_list)
         #print ("b_corner_list: ", b_corner_list)
-        #print ("c_corner_list: ", c_corner_list)
+        print ("c_corner_list: ", c_corner_list)
         #print ("d_corner_list: ", d_corner_list)
         
         self.a_corner = (self.parallelograms[-1].top_layer_zmax, max(a_corner_list))

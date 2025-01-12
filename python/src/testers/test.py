@@ -65,7 +65,8 @@ def wedge_test(lining:str = "makePatches_Projective_center", apexZ0 = 0, z0_spac
         if show_acceptance_of_cover:
             plt.figure(figsize = (1.7*z0_luminousRegion/figSizeScale, top_layer_cutoff/figSizeScale))
         else:
-            nPointsInTrapezoid = data.plot(show_lines = True, show = ( k == 42))
+            # wedges 42, 419, 5795 have largest n_patches or num_all_patches
+            nPointsInTrapezoid = data.plot(show_lines = True, show = ( k == 42 or k == 419 or k == 5795))
             print(' nPointsInTrapezoid: ', nPointsInTrapezoid)
             for layer in range(len(nPointsInTrapezoid)):
                 nPointsInTrapezoidFor2D.append(nPointsInTrapezoid[layer])
@@ -79,7 +80,7 @@ def wedge_test(lining:str = "makePatches_Projective_center", apexZ0 = 0, z0_spac
         #append number of covers in the patch
         num_covers.append(cover.n_patches)
         num_all_patches.append(len(cover.all_patches))
-        print('wedge: ', k, ' n_patches: ', cover.n_patches, ' tertiaryPatch: ', cover.tertiaryPatch)
+        print('wedge: ', k, ' n_patches: ', cover.n_patches, ' all_patches: ', len(cover.all_patches), ' tertiaryPatch: ', cover.tertiaryPatch)
         out = [] 
 
         #these loops calculate PRF
